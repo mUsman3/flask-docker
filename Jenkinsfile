@@ -57,8 +57,10 @@ pipeline {
 
         /* If enabled, launch the deployment job */
         stage('Trigger ManifestUpdate') {
+            steps {
                 echo "triggering updatemanifestjob"
                 build job: 'updatemanifest', parameters: [string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)]
+            }
         }
     }
 }
