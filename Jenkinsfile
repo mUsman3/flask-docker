@@ -4,7 +4,7 @@ environmentParts ="${env.JOB_BASE_NAME}".split("-")
 environment = environmentParts[environmentParts.length - 1]
 
 pipeline {
-    agent none
+    agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('docker-cred')
     }
