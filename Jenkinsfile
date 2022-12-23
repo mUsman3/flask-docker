@@ -5,6 +5,9 @@ environment = environmentParts[environmentParts.length - 1]
 
 pipeline {
     agent none
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-cred')
+    }
 
     stages {
         /* Let's make sure we have the repository cloned to our workspace */
@@ -12,10 +15,6 @@ pipeline {
           steps {
                 script {
                     node {
-                        if (environment != "dev" && environment != "acc" && environment != "prod") {
-                            error("Project name ends with " + environment + " but should end with 'dev', 'acc', or 'prod'. Example: 'build-${projectName}-dev'.")
-                        }
-
                         checkout scm
                     }
                 }
@@ -35,10 +34,10 @@ pipeline {
                             tagName = "${dateTime}-${shortCommit}"
                         }
 
-                        sh 'echo "..." | sudo docker login registry.gitlab.com --username ... --password-stdin'
+                        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
 
                         try {
-                            sh "sudo docker build -t registry.gitlab.com/${gitlabPath}:${tagName} -t registry.gitlab.com/${gitlabPath}:latest-${environment} ."
+                            sh "sudo docker build -t musman3/flask-k8s:${tagName} -t musman3/flask-k8s:latest ."
                         } catch (Exception e) {
                             now = new Date()
                             dateTime = now.format("dd-MM-yyyy HH:mm")
@@ -46,45 +45,23 @@ pipeline {
                             commitHistory = sh(returnStdout: true, script: "git log --graph --oneline -n 5 --pretty=format:\"%ad %an %s\" --date=short")
                             additionalMessage = ""
 
-                            if (Deploy == "Build & deploy") {
-                                additionalMessage = ": deploy aborted"
-                            }
-
-                            discordSend description: "```Check the logs to see what went wrong (probably TS errors)``````Last 5 commits:\n\n${commitHistory}```",
-                            footer: "${projectName}-${environment} - " + dateTime + " - " + "${commitData}",
-                            link: env.BUILD_URL + "/console",
-                            result: "UNSTABLE",
-                            thumbnail: "https://i.imgur.com/zSBw3LG.png",
-                            title: "Build failed" + additionalMessage,
-                            webhookURL: "..."
+                            // if (Deploy == "Build & deploy") {
+                            //     additionalMessage = ": deploy aborted"
+                            // }
                         }
 
-                        sh "sudo docker push registry.gitlab.com/${gitlabPath}:${tagName}"
-                        sh "sudo docker push registry.gitlab.com/${gitlabPath}:latest-${environment}"
+                        sh "sudo docker push musman3/flask-k8s:${tagName}"
+                        sh "sudo docker push musman3/flask-k8s:latest"
                     }
                 }
             }
         }
 
         /* If enabled, launch the deployment job */
-        stage('Deploy image') {
-            steps {
-                script {
-                    node {
-                        if (Deploy == "Build & deploy") {
-                            jobResponse = sh(
-                                returnStdout: true,
-                                script: "curl 'http://scrumble:...@.../job/deploy-${projectName}/buildWithParameters?token=...&Omgeving=${environment}&Tag=registry.gitlab.com/${gitlabPath}:${tagName}'"
-                            )
-
-                            if (jobResponse.contains("404")) {
-                                error("Deploy job 'deploy-${projectName}' does not exist")
-                            }
-                        }
-                    }
-                }
-            }
+        stage('Trigger ManifestUpdate') {
+                echo "triggering updatemanifestjob"
+                build job: 'updatemanifest', parameters: [string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)]
         }
     }
 }
-```
+
