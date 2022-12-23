@@ -24,7 +24,7 @@ pipeline {
         stage('Build image') {
             steps {
                 script {
-                    node {
+                    
                         tagName = "${Tagname}"
 
                         if (tagName == "") {
@@ -50,7 +50,6 @@ pipeline {
 
                         sh "sudo docker push musman3/flask-k8s:${tagName}"
                         sh "sudo docker push musman3/flask-k8s:latest"
-                    }
                 }
             }
         }
