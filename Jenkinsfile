@@ -47,8 +47,8 @@ pipeline {
                             // }
                     }
 
-                    sh "sudo docker push musman3/flask-k8s:${tagName}"
-                    sh "sudo docker push musman3/flask-k8s:latest"
+                    sh "docker push musman3/flask-k8s:${tagName}"
+                    sh "docker push musman3/flask-k8s:latest"
                 }
             }
         }
