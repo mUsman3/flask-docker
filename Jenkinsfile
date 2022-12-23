@@ -34,7 +34,7 @@ pipeline {
                     sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
 
                     try {
-                        sh "sudo docker build -t musman3/flask-k8s:${tagName} -t musman3/flask-k8s:latest ."
+                        sh "docker build -t musman3/flask-k8s:${tagName} -t musman3/flask-k8s:latest ."
                     } catch (Exception e) {
                         now = new Date()
                         dateTime = now.format("dd-MM-yyyy HH:mm")
