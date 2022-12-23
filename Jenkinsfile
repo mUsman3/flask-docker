@@ -14,9 +14,7 @@ pipeline {
         stage('Clone repository') {
           steps {
                 script {
-                    node {
-                        checkout scm
-                    }
+                    checkout scm
                 }
             }
         }
